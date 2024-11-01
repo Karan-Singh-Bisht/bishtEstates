@@ -7,12 +7,12 @@ import {
   Route,
   createRoutesFromElements,
 } from "react-router-dom";
-import Home from "./components/Home.jsx";
-import SignIn from "./components/SignIn.jsx";
-import SignUp from "./components/SignUp.jsx";
-import About from "./components/About.jsx";
+import Home from "./pages/Home.jsx";
+import SignIn from "./pages/SignIn.jsx";
+import SignUp from "./pages/SignUp.jsx";
+import About from "./pages/About.jsx";
 import Layout from "./layouts/Layout.jsx";
-import Profile from "./components/Profile.jsx";
+import Profile from "./pages/Profile.jsx";
 
 const router = createBrowserRouter(
   createRoutesFromElements(

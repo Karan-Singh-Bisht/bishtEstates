@@ -1,5 +1,6 @@
 const User = require("../models/user.model");
 const asyncHandler = require("../utils/asyncHandler");
+const ApiError = require("../utils/apiError");
 
 //Get Username,email,password
 //Check if user already exists
@@ -12,7 +13,7 @@ module.exports.signUpController = asyncHandler(async (req, res) => {
   const existingUser = await User.findOne({ email });
 
   if (existingUser) {
-    return res.json({ message: "User Already Exists" });
+    return res.status(400).json({ message: "User already Exists!" });
   }
 
   const newUser = await User.create({
@@ -20,6 +21,10 @@ module.exports.signUpController = asyncHandler(async (req, res) => {
     email,
     password,
   });
+
+  if (!newUser) {
+    return res.status(500).json({ message: "Internal Server Error!" });
+  }
 
   return res.status(201).json({
     message: "New User Created",

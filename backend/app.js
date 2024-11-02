@@ -5,9 +5,11 @@ require("dotenv").config();
 const db = require("./config/db");
 db();
 
-app.get("/", (req, res) => {
-  res.send("Hello, Bisht Estate!");
-});
+//Routes
+
+const userRoute = require("./routes/user.route");
+
+app.use("/api/user", userRoute);
 
 const PORT = process.env.PORT || 3000;
 

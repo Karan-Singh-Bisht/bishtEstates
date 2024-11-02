@@ -5,11 +5,19 @@ require("dotenv").config();
 const db = require("./config/db");
 db();
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+const bodyParser = require("body-parser"); //For parsing json body
+app.use(bodyParser.json());
+
 //Routes
 
 const userRoute = require("./routes/user.route");
+const authRoute = require("./routes/auth.route");
 
 app.use("/api/user", userRoute);
+app.use("/api/auth", authRoute);
 
 const PORT = process.env.PORT || 3000;
 

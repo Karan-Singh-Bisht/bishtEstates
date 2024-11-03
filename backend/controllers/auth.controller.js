@@ -1,6 +1,8 @@
 const User = require("../models/user.model");
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/apiError");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 //Get Username,email,password
 //Check if user already exists
@@ -43,4 +45,29 @@ module.exports.signUpController = asyncHandler(async (req, res) => {
 //If yes return response welcome and redirect to home page;
 
 //TODO -> Add JWT Functionality and cookies
-// module.exports.SignInUserController;
+module.exports.SignInUserController = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ message: "Please provide email and password!" });
+  }
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(401).json({ message: "Invalid email or password!" });
+  }
+  const isMatch = bcrypt.compareSync(password, user.password);
+  if (!isMatch) {
+    return res.status(401).json({ message: "Invalid Password" });
+  }
+  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET);
+  const { password: pass, ...rest } = user._doc;
+  res.cookie("token", token, {
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000,
+  });
+  return res.json({
+    message: `Welcome ${user.username}!!`,
+    user: rest,
+  });
+});

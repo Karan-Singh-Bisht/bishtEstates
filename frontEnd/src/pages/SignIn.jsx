@@ -1,38 +1,38 @@
-import React, { useState } from "react";
+import React from "react";
 import { NavLink } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import Loader from "../components/Loader";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  signInFailure,
+  signInSuccess,
+  signInstart,
+} from "../redux/user/userSlice";
 
 function SignIn() {
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const navigate = useNavigate();
-
   const {
     register,
     handleSubmit,
-    watch,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  //Proxy in vite config
+  const { loading, error } = useSelector((state) => state.user);
 
   const onSubmit = async (data) => {
+    dispatch(signInstart());
     try {
       const response = await axios.post("/api/auth/signIn", data);
       if (response.status >= 200 && response.status < 300) {
+        dispatch(signInSuccess(response.data));
         navigate("/home");
       }
     } catch (err) {
-      if (err.response) {
-        setErrorMessage(err.response.data);
-      } else if (err.request) {
-        setErrorMessage(err.request);
-      } else {
-        setErrorMessage(err.message);
-      }
+      const errorMessage = err.response?.data || err.message;
+      dispatch(signInFailure(errorMessage));
     }
   };
 
@@ -50,9 +50,7 @@ function SignIn() {
           })}
           className="border p-3 rounded-lg"
           type="email"
-          name="email"
-          id="email"
-          placeholder="email"
+          placeholder="Email"
         />
         {errors.email && (
           <span className="text-red-500">{errors.email.message}</span>
@@ -61,18 +59,16 @@ function SignIn() {
           {...register("password", { required: "Password is required" })}
           className="border p-3 rounded-lg"
           type="password"
-          name="password"
-          id="password"
-          placeholder="password"
+          placeholder="Password"
         />
         {errors.password && (
           <span className="text-red-500">{errors.password.message}</span>
         )}
         <button
-          disabled={isSubmitting}
+          disabled={loading}
           className="bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80"
         >
-          {isSubmitting ? (
+          {loading ? (
             <>
               <Loader />
               <span className="ml-2">Submitting</span> {/* Loader */}
@@ -81,17 +77,17 @@ function SignIn() {
             "Submit"
           )}
         </button>
-        <button className="bg-red-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80">
+        <button className="bg-red-700 text-white p-3 rounded-lg uppercase hover:opacity-95">
           Continue With Google
         </button>
       </form>
       <h3 className="mt-3 flex gap-2">
-        Have an account?{" "}
+        Don't have an account?{" "}
         <NavLink className="text-blue-700" to="/sign-up">
           Sign Up
         </NavLink>
       </h3>
-      {errorMessage && <p className="text-red-500">{errorMessage.message}</p>}
+      {error && <p className="text-red-500">{error}</p>}
     </div>
   );
 }

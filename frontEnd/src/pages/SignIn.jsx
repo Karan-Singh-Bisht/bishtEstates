@@ -10,6 +10,7 @@ import {
   signInSuccess,
   signInstart,
 } from "../redux/user/userSlice";
+import OAuth from "../components/OAuth";
 
 function SignIn() {
   const {
@@ -77,9 +78,7 @@ function SignIn() {
             "Submit"
           )}
         </button>
-        <button className="bg-red-700 text-white p-3 rounded-lg uppercase hover:opacity-95">
-          Continue With Google
-        </button>
+        <OAuth />
       </form>
       <h3 className="mt-3 flex gap-2">
         Don't have an account?{" "}

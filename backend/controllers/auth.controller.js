@@ -44,7 +44,6 @@ module.exports.signUpController = asyncHandler(async (req, res) => {
 //If not return error;
 //If yes return response welcome and redirect to home page;
 
-//TODO -> Add JWT Functionality and cookies
 module.exports.SignInUserController = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -70,4 +69,33 @@ module.exports.SignInUserController = asyncHandler(async (req, res) => {
     message: `Welcome ${user.username}!!`,
     user: rest,
   });
+});
+
+module.exports.googleController = asyncHandler(async (req, res) => {
+  const user = await User.findOne({ email: req.body.email });
+  if (user) {
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET);
+    const { password: pass, ...rest } = user._doc;
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000,
+      })
+      .status(200)
+      .json(rest);
+  } else {
+    const generatedPassword =
+      Math.random().toString(36).slice(-8) +
+      Math.random().toString(36).slice(-8);
+    const hashedPassword = bcrypt.hashSync(generatedPassword, 10);
+    const newUser = await User.create({
+      username: req.body.name + Math.random().toString(36).slice(-4),
+      email: req.body.email,
+      password: hashedPassword,
+      avatar: req.body.photo,
+    });
+    const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET);
+    const { password: pass, ...rest } = newUser._doc;
+    res.cookie("token", token, { httpOnly: true }).status(200).json(rest);
+  }
 });

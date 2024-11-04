@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import Loader from "../components/Loader";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import OAuth from "../components/OAuth";
 
 function SignUp() {
   const [errorMessage, setErrorMessage] = useState("");
@@ -96,9 +97,7 @@ function SignUp() {
             "Submit"
           )}
         </button>
-        <button className="bg-red-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80">
-          Continue With Google
-        </button>
+        <OAuth />
       </form>
       <h3 className="mt-3 flex gap-2">
         Have an account?{" "}

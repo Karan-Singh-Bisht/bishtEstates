@@ -1,16 +1,14 @@
 const User = require("../models/user.model");
 const asyncHandler = require("../utils/asyncHandler");
-const ApiError = require("../utils/apiError");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const uploadOnCloudinary = require("../utils/cloudinary");
 
 //Get Username,email,password
 //Check if user already exists
 //If exists return userAlready exists
 //if not create a new user
 //Return user
-
-//TODO -> Add JWT TOKEN
 
 module.exports.signUpController = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
@@ -20,10 +18,15 @@ module.exports.signUpController = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "User already Exists!" });
   }
 
+  const avatarLocalPath = req.file?.path;
+
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+
   const newUser = await User.create({
     username,
     email,
     password,
+    avatar: avatar?.url,
   });
 
   if (!newUser) {
@@ -34,6 +37,7 @@ module.exports.signUpController = asyncHandler(async (req, res) => {
     message: "New User Created",
     username: newUser.username,
     email: newUser.email,
+    avatar: newUser.avatar,
   });
 });
 
@@ -76,13 +80,14 @@ module.exports.googleController = asyncHandler(async (req, res) => {
   if (user) {
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET);
     const { password: pass, ...rest } = user._doc;
-    res
-      .cookie("token", token, {
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000,
-      })
-      .status(200)
-      .json(rest);
+    res.cookie("token", token, {
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+    return res.json({
+      message: `Welcome ${user.username}!!`,
+      user: rest,
+    });
   } else {
     const generatedPassword =
       Math.random().toString(36).slice(-8) +
@@ -96,6 +101,13 @@ module.exports.googleController = asyncHandler(async (req, res) => {
     });
     const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET);
     const { password: pass, ...rest } = newUser._doc;
-    res.cookie("token", token, { httpOnly: true }).status(200).json(rest);
+    res.cookie("token", token, {
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+    return res.json({
+      message: `Welcome ${newUser.username}!!`,
+      user: rest,
+    });
   }
 });

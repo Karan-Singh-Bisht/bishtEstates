@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 
 function Navbar() {
   const { currentUser } = useSelector((state) => state.user);
-
+  console.log(currentUser);
   return (
     <div className="w-full flex flex-col md:flex-row justify-between h-auto md:h-[5vw] bg-[#E2E8F0] px-6 md:px-[10vw] py-4 items-center">
       <div className="mb-2 md:mb-0">
@@ -50,7 +50,7 @@ function Navbar() {
           {currentUser ? (
             <img
               className="w-10 rounded-full h-10 object-cover"
-              src={currentUser.avatar}
+              src={currentUser.user.avatar}
               alt="profile"
             ></img>
           ) : (

@@ -1,17 +1,36 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
+import { useRef } from "react";
 
 function Profile() {
   const { currentUser } = useSelector((state) => state.user);
+  const fileRef = useRef(null);
+  const [file, setFile] = useState(undefined);
+
+  useEffect(() => {
+    if (file) {
+      handleFileUpload(file);
+    }
+  }, [file]);
 
   return (
     <div className="p-3 max-w-lg mx-auto">
       <h1 className="text-4xl mt-10 text-center font-bold">Profile</h1>
       <form className="flex flex-col gap-4">
+        <input
+          onChange={(e) => {
+            setFile(e.target.files[0]);
+          }}
+          type="file"
+          ref={fileRef}
+          hidden
+          accept="image/*"
+        />
         <img
+          onClick={() => fileRef.current.click()}
           className="w-24 h-24 object-cover cursor-pointer self-center mt-4 rounded-full"
-          src={currentUser.avatar}
+          src={currentUser.user.avatar}
           alt="profile image"
         />
         <input

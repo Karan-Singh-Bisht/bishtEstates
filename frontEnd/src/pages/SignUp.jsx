@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { NavLink } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import Loader from "../components/Loader";
@@ -8,34 +8,49 @@ import OAuth from "../components/OAuth";
 
 function SignUp() {
   const [errorMessage, setErrorMessage] = useState("");
-
+  const [previewImage, setPreviewImage] = useState(""); // State for image preview
   const navigate = useNavigate();
-
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors, isSubmitting },
   } = useForm();
+  const fileRef = useRef(null);
 
-  //Proxy in vite config
+  // Handle file input change to set preview
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setPreviewImage(URL.createObjectURL(file)); // Set preview image URL
+    }
+  };
 
   const onSubmit = async (data) => {
     try {
-      const response = await axios.post("/api/auth/signUp", data);
+      const formData = new FormData();
+      if (fileRef.current && fileRef.current.files[0]) {
+        formData.append("avatar", fileRef.current.files[0]);
+      }
+      formData.append("username", data.username);
+      formData.append("email", data.email);
+      formData.append("password", data.password);
+
+      const response = await axios.post("/api/auth/signUp", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
       if (response.status >= 200 && response.status < 300) {
-        // console.log("Sign-up successful:", response.data);
         navigate("/sign-in");
       }
     } catch (err) {
       if (err.response) {
-        // console.log("Error:", err.response.data);
         setErrorMessage(err.response.data);
       } else if (err.request) {
-        // console.log("No response received:", err.request);
-        setErrorMessage(err.request);
+        setErrorMessage("No response from server");
       } else {
-        // console.log("Error:", err.message);
         setErrorMessage(err.message);
       }
     }
@@ -46,11 +61,26 @@ function SignUp() {
       <h1 className="text-4xl text-center font-semibold my-7">Sign Up</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <input
+          type="file"
+          ref={fileRef}
+          hidden
+          accept="image/*"
+          onChange={handleFileChange} // Add onChange handler
+        />
+        <img
+          onClick={() => fileRef.current.click()}
+          className="rounded-full w-24 h-24 hover:cursor-pointer object-cover mx-auto"
+          src={
+            previewImage ||
+            "https://img.freepik.com/free-vector/user-circles-set_78370-4704.jpg"
+          } // Display preview image
+          alt="profile"
+        />
+        <input
           {...register("username", { required: true })}
           className="border p-3 rounded-lg"
           type="text"
           name="username"
-          id="username"
           placeholder="username"
         />
         {errors.username && (
@@ -67,7 +97,6 @@ function SignUp() {
           className="border p-3 rounded-lg"
           type="email"
           name="email"
-          id="email"
           placeholder="email"
         />
         {errors.email && (
@@ -78,7 +107,6 @@ function SignUp() {
           className="border p-3 rounded-lg"
           type="password"
           name="password"
-          id="password"
           placeholder="password"
         />
         {errors.password && (
@@ -91,7 +119,7 @@ function SignUp() {
           {isSubmitting ? (
             <>
               <Loader />
-              <span className="ml-2">Submitting</span> {/* Loader */}
+              <span className="ml-2">Submitting</span>
             </>
           ) : (
             "Submit"

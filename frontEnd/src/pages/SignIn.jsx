@@ -86,7 +86,7 @@ function SignIn() {
           Sign Up
         </NavLink>
       </h3>
-      {error && <p className="text-red-500">{error}</p>}
+      {error && <p className="text-red-500">{error.message}</p>}
     </div>
   );
 }

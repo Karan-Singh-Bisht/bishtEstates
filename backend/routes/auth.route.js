@@ -5,8 +5,9 @@ const {
   SignInUserController,
   googleController,
 } = require("../controllers/auth.controller");
+const upload = require("../middlewares/multer.middleware");
 
-router.post("/signUp", signUpController);
+router.post("/signUp", upload.single("avatar"), signUpController);
 router.post("/signIn", SignInUserController);
 router.post("/google", googleController);
 

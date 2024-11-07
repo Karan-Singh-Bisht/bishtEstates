@@ -94,7 +94,7 @@ module.exports.googleController = asyncHandler(async (req, res) => {
       Math.random().toString(36).slice(-8);
     const hashedPassword = bcrypt.hashSync(generatedPassword, 10);
     const newUser = await User.create({
-      username: req.body.name + Math.random().toString(36).slice(-4),
+      username: req.body.name,
       email: req.body.email,
       password: hashedPassword,
       avatar: req.body.photo,

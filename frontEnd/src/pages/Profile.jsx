@@ -1,58 +1,75 @@
-import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import React, { useState, useRef } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
-import { useRef } from "react";
 import Loader from "../components/Loader";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import {
+  updateUserStart,
+  updateUserSuccess,
+  updateUserFailure,
+} from "../redux/user/userSlice";
 
 function Profile() {
   const { currentUser } = useSelector((state) => state.user);
   const [errorMessage, setErrorMessage] = useState("");
-  const [previewImage, setPreviewImage] = useState("");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
+  const [previewImage, setPreviewImage] = useState(currentUser.user.avatar);
   const fileRef = useRef(null);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors, isSubmitting },
-  } = useForm();
+  } = useForm({
+    defaultValues: {
+      username: currentUser.user.username,
+      email: currentUser.user.email,
+    },
+  });
 
-  // Handle file input change to set preview
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setPreviewImage(URL.createObjectURL(file)); // Set preview image URL
+      setPreviewImage(URL.createObjectURL(file));
     }
   };
 
   const onSubmit = async (data) => {
+    dispatch(updateUserStart());
     try {
       const formData = new FormData();
-      if (fileRef.current && fileRef.current.files[0]) {
+      if (fileRef.current?.files[0]) {
         formData.append("avatar", fileRef.current.files[0]);
       }
-      formData.append("username", data.username);
-      formData.append("email", data.email);
-      formData.append("password", data.password);
 
-      const response = await axios.post("/api/auth/signUp", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      // Append other fields to FormData
+      for (const [key, value] of Object.entries(data)) {
+        if (value) {
+          formData.append(key, value);
+        }
+      }
 
+      const response = await axios.put(
+        `/api/user/update/${currentUser.user._id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
       if (response.status >= 200 && response.status < 300) {
+        dispatch(updateUserSuccess(response.data));
         navigate("/profile");
       }
     } catch (err) {
-      if (err.response) {
-        setErrorMessage(err.response.data);
-      } else if (err.request) {
-        setErrorMessage("No response from server");
-      } else {
-        setErrorMessage(err.message);
-      }
+      const errorMsg =
+        err.response?.data?.message ||
+        err.message ||
+        "An error occurred while updating";
+      setErrorMessage(errorMsg);
+      dispatch(updateUserFailure(errorMsg));
     }
   };
 
@@ -61,29 +78,23 @@ function Profile() {
       <h1 className="text-4xl mt-10 text-center font-bold">Profile</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <input
-          onChange={handleFileChange}
           type="file"
           ref={fileRef}
           hidden
           accept="image/*"
+          onChange={handleFileChange}
         />
         <img
           onClick={() => fileRef.current.click()}
           className="w-24 h-24 object-cover cursor-pointer self-center mt-4 rounded-full"
-          src={previewImage || currentUser.user.avatar}
-          alt="profile image"
+          src={previewImage}
+          alt="profile"
         />
         <input
           {...register("username")}
-          value={username}
-          onChange={(e) => {
-            setUsername(e.target.value);
-          }}
           type="text"
           className="border p-3 max-w-xl rounded-lg"
-          placeholder={currentUser.user.username}
-          name="username"
-          id="username"
+          placeholder="Username"
         />
         <input
           {...register("email", {
@@ -92,27 +103,19 @@ function Profile() {
               message: "Invalid Format",
             },
           })}
-          value={email}
           type="email"
-          onChange={(e) => {
-            setEmail(e.target.value);
-          }}
           className="border p-3 max-w-xl rounded-lg"
-          placeholder={currentUser.user.email}
-          name="email"
-          id="email"
+          placeholder="Email"
         />
+        {errors.email && (
+          <span className="text-red-500">{errors.email.message}</span>
+        )}
         <input
           {...register("password")}
-          type="text"
+          type="password"
           className="border p-3 max-w-xl rounded-lg"
-          placeholder="password"
-          name="password"
-          id="password"
+          placeholder="Password"
         />
-        {errors.password && (
-          <span className="text-red-500">{errors.password.message}</span>
-        )}
         <button
           disabled={isSubmitting}
           className="bg-slate-700 text-white rounded-lg p-3 uppercase hover:opacity-95 disabled:opacity-80"
@@ -131,7 +134,7 @@ function Profile() {
         <span className="text-red-700 cursor-pointer">Delete Account</span>
         <span className="text-red-700 cursor-pointer">Sign Out</span>
       </div>
-      {errorMessage && <p className="text-red-500">{errorMessage.message}</p>}
+      {errorMessage && <p className="text-red-500">{errorMessage}</p>}
     </div>
   );
 }

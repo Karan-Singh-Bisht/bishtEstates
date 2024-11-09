@@ -5,8 +5,9 @@ const {
   updateUser,
 } = require("../controllers/user.controller");
 const { verifyUserToken } = require("../middlewares/verifyUserToken");
+const upload = require("../middlewares/multer.middleware");
 
 router.get("", testController);
-router.post("/update/:id", verifyUserToken, updateUser);
+router.put("/update/:id", verifyUserToken, upload.single("avatar"), updateUser);
 
 module.exports = router;
